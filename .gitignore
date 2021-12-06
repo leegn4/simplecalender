@@ -1,0 +1,8 @@
+.vscode/c_cpp_properties.json
+.vscode/launch.json
+.vscode/tasks.json
+practice/fileIO
+practice/fileIO.c
+practice/functionpointer
+practice/functionpointer.c
+practice/hello.txt
