@@ -2,13 +2,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+int days_of_month[]={31,28,31,30,31,30,31,31,30,31,30,31};
+
 typedef struct {
     int year,month,days,start;
     int** page;
 } PAGE;
 
 PAGE* pages[131][12];
-int days_of_month[]={31,28,31,30,31,30,31,31,30,31,30,31};
 
 typedef struct _SCHEHDULE{
     int type;
@@ -17,6 +18,14 @@ typedef struct _SCHEHDULE{
 } SCHEDULE;
 
 SCHEDULE* schedules[131][12][31]={NULL,};
+
+int IsValid(int year, int month, int day, int type) {
+    int a=(1970<=year)&&(year<=2100);
+    int b=(1<=month)&&(month<=12);
+    int c=(1<=day)&&(day<=GetDays(year,month));
+    int d=(type==0)||(type==1);
+    return (a&&b&&c&&d);
+}
 
 int IsLeap(int year) {
     return ((year%4==0)&&(year%100!=0))||(year%400==0);
@@ -128,8 +137,57 @@ void RemoveSchedule(int year, int month, int day) {
     prev->next=NULL;
     free(curr);
 }
-// void Save();
-// void Load();
+
+void Save() {
+    FILE* fp=fopen("data.txt","w+t");
+    if (fp!=NULL) {
+        for (int i=0;i<131;i++) {
+            for (int j=0;j<12;j++) {
+                for (int k=0;k<31;k++) {
+                    SCHEDULE* curr=schedules[i][j][k];
+                    while (curr->next!=NULL) {
+                        curr=curr->next;
+                        fprintf(fp,"%d-%d-%d-%d-%s\n",i+1970,j+1,k+1,curr->type,curr->content);
+                    }
+                }
+            }
+        }
+    } else printf("File save failed\n");
+    fclose(fp);
+}
+
+void Load() {
+    FILE* fp=fopen("data.txt","rt");
+    if (fp!=NULL) {
+        int year,month,day,type;
+        char buffer[1001];
+        while (!feof(fp)) {
+            int e=fscanf(fp,"%d-%d-%d-%d-%[^\n]s",&year,&month,&day,&type,buffer);
+            if ((e!=5)||(!IsValid(year,month,day,type))) {
+                printf("Data File corrupted\n");
+                ResetSchedule();
+                break;
+            }
+            AddSchedule(year,month,day,type,buffer);
+        }
+    } else printf("Data file does not exist\n");
+}
+
+void ResetSchedule() {
+    for (int i=0;i<131;i++) {
+        for (int j=0;j<12;j++) {
+            for (int k=0;k<31;k++) free(schedules[i][j][k]);
+        }
+    }
+    for (int i=0;i<131;i++) {
+        for (int j=0;j<12;j++) {
+            for (int k=0;k<31;k++) {
+                schedules[i][j][k]=(SCHEDULE*)malloc(sizeof(SCHEDULE));
+                schedules[i][j][k]->next=NULL;
+            }
+        }
+    }
+}
 
 int main() {
     for (int i=0;i<sizeof(pages)/sizeof(pages[0]);i++) {
@@ -152,24 +210,27 @@ int main() {
                 int year,month;
                 if (scanf("%d %d",&year,&month)!=EOF) {
                     PrintCalender(year,month);
-                } else {
-                    rewind(stdin);
-                }
-            }
-            else if (!strcmp(input,commands[1])) {
+                } else rewind(stdin);
+            } else if (!strcmp(input,commands[1])) {
                 int year,month,day,type;
                 char content[1000];
-                scanf("%d %d %d %d",&year,&month,&day,&type);
-                scanf(" %[^\n]s",content);
-                AddSchedule(year,month,day,type,content);
-            }
-            else if (!strcmp(input,commands[2])) {
+                if (scanf("%d %d %d %d",&year,&month,&day,&type)!=EOF) {
+                    scanf(" %[^\n]s",content);
+                    AddSchedule(year,month,day,type,content);
+                } else rewind(stdin);
+            } else if (!strcmp(input,commands[2])) {
                 int year,month,day;
-                scanf("%d %d %d",&year,&month,&day);
-                RemoveSchedule(year,month,day);
+                if (scanf("%d %d %d",&year,&month,&day)!=EOF) {
+                    RemoveSchedule(year,month,day);
+                } else rewind(stdin);
+            } else if (!strcmp(input,commands[3])) {
+                Save();
+            } else if (!strcmp(input,commands[4])) {
+                Load();
             }
         }
     } while (strcmp(input,"exit"));
+
     for (int i=0;i<sizeof(pages)/sizeof(pages[0]);i++) {
         for (int j=0;j<sizeof(pages[0])/sizeof(PAGE*);j++) free(pages[i][j]);
     }
