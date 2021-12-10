@@ -192,6 +192,7 @@ void Load() { // load 기능
             } else AddSchedule(year,month,day,type,buffer); // 정상적인 경우 일정 추가
         }
     } else printf("Data file does not exist\n"); // 파일 예외처리
+    fclose(fp);
 }
 
 int main() {
