@@ -20,14 +20,6 @@ typedef struct _SCHEHDULE{
 
 SCHEDULE* schedules[131][12][31]={NULL,}; // 2차원 배열의 각 요소에 2중 포인터 할당(달별로 일 수만큼) -> 3차원 구조체 포인터 배열처럼 사용해서 각 일마다 리스트의 head 포인터 할당 하려 했으나 오류 발생.
 
-int IsValid(int year, int month, int day, int type) { // 입력값 검증
-    int a=(1970<=year)&&(year<=2100); // 년
-    int b=(1<=month)&&(month<=12); // 월
-    int c=(1<=day)&&(day<=GetDays(year,month)); // 일
-    int d=(type==0)||(type==1); // type
-    return (a&b&c&d); // bitwise is faster
-}
-
 int IsLeap(int year) { // 윤년인지 확인
     return ((year%4==0)&&(year%100!=0))||(year%400==0);
 }
@@ -39,6 +31,14 @@ int GetDays(int year, int month) { // 입력받은 달의 일 수 확인
     } else {
         return days_of_month[month-1]; // 윤년이 아니면 그대로 리턴
     }
+}
+
+int IsValid(int year, int month, int day, int type) { // 입력값 검증
+    int a=(1970<=year)&&(year<=2100); // 년
+    int b=(1<=month)&&(month<=12); // 월
+    int c=(1<=day)&&(day<=GetDays(year,month)); // 일
+    int d=(type==0)||(type==1); // type
+    return (a&b&c&d); // bitwise is faster
 }
 
 int GetDayOfWeek(int year, int month, int day) { // 입력받은 날짜의 요일 확인
@@ -73,6 +73,22 @@ void MakePage(PAGE* p) { // print에 사용되는 한 페이지 생성
 void FreePage(int** p) { // 페이지 해제
     for (int i=0;i<6;i++) free(p[i]);
     free(p);
+}
+
+void ResetSchedule() { // 일정 초기화(load 파일 변경되어 데이터 변조 시)
+    for (int i=0;i<131;i++) {
+        for (int j=0;j<12;j++) {
+            for (int k=0;k<31;k++) free(schedules[i][j][k]);
+        }
+    }
+    for (int i=0;i<131;i++) {
+        for (int j=0;j<12;j++) {
+            for (int k=0;k<31;k++) {
+                schedules[i][j][k]=(SCHEDULE*)malloc(sizeof(SCHEDULE));
+                schedules[i][j][k]->next=NULL;
+            }
+        }
+    }
 }
 
 void PrintCalender(int year, int month) { // print 기능
@@ -152,7 +168,7 @@ void Save() { // save 기능
                         curr=curr->next;
                         count++;
                         if (count!=schedule_count) fprintf(fp,"%d-%d-%d-%d-%s\n",i+1970,j+1,k+1,curr->type,curr->content); // 존재하는 모든 데이터 서식화하여 저장
-                        else fprintf(fp,"%d-%d-%d-%d-%s",i+1970,j+1,k+1,curr->type,curr->content); // 마지막줄은 \n 없이 입력
+                        else fprintf(fp,"%d-%d-%d-%d-%s",i+1970,j+1,k+1,curr->type,curr->content); // 마지막줄은 \n 없이 입력(EOF 빙지)
                     }
                 }
             }
@@ -175,22 +191,6 @@ void Load() { // load 기능
             } else AddSchedule(year,month,day,type,buffer); // 정상적인 경우 일정 추가
         }
     } else printf("Data file does not exist\n"); // 파일 예외처리
-}
-
-void ResetSchedule() { // 일정 초기화(load 파일 변경되어 데이터 변조 시)
-    for (int i=0;i<131;i++) {
-        for (int j=0;j<12;j++) {
-            for (int k=0;k<31;k++) free(schedules[i][j][k]);
-        }
-    }
-    for (int i=0;i<131;i++) {
-        for (int j=0;j<12;j++) {
-            for (int k=0;k<31;k++) {
-                schedules[i][j][k]=(SCHEDULE*)malloc(sizeof(SCHEDULE));
-                schedules[i][j][k]->next=NULL;
-            }
-        }
-    }
 }
 
 int main() {
