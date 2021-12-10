@@ -3,6 +3,7 @@
 #include <string.h>
 
 int days_of_month[]={31,28,31,30,31,30,31,31,30,31,30,31};
+int schedule_count=0; // 일정 개수
 
 typedef struct {
     int year,month,days,start;
@@ -113,6 +114,7 @@ void PrintCalender(int year, int month) { // print 기능
 }
 
 void AddSchedule(int year, int month, int day, int type, char* content) { // add 기능
+    schedule_count++;
     SCHEDULE* curr=schedules[year-1970][month-1][day-1]; // 리스트 원소 탐색 포인터
     while (curr->next!=NULL) { // 끝까지 탐색
         curr=curr->next;
@@ -140,6 +142,7 @@ void RemoveSchedule(int year, int month, int day) { // remove 기능
 
 void Save() { // save 기능
     FILE* fp=fopen("data.txt","w+t");
+    int count=0; // load 마지막줄 \n에 의해 EOF로 예외 발생하는 경우 방지하기 위해 개수 셈
     if (fp!=NULL) {
         for (int i=0;i<131;i++) {
             for (int j=0;j<12;j++) {
@@ -147,7 +150,9 @@ void Save() { // save 기능
                     SCHEDULE* curr=schedules[i][j][k]; // 3차원 구조체 포인터 배열의 각 원소에 대하여 head 포인터 설정
                     while (curr->next!=NULL) { // 끝까지 탐색
                         curr=curr->next;
-                        fprintf(fp,"%d-%d-%d-%d-%s\n",i+1970,j+1,k+1,curr->type,curr->content); // 존재하는 모든 데이터 서식화하여 저장
+                        count++;
+                        if (count!=schedule_count) fprintf(fp,"%d-%d-%d-%d-%s\n",i+1970,j+1,k+1,curr->type,curr->content); // 존재하는 모든 데이터 서식화하여 저장
+                        else fprintf(fp,"%d-%d-%d-%d-%s",i+1970,j+1,k+1,curr->type,curr->content); // 마지막줄은 \n 없이 입력
                     }
                 }
             }
@@ -167,8 +172,7 @@ void Load() { // load 기능
                 printf("Data File corrupted\n");
                 ResetSchedule(); // 복원 불가능 시 초기화
                 break;
-            }
-            AddSchedule(year,month,day,type,buffer); // 정상적인 경우 일정 추가
+            } else AddSchedule(year,month,day,type,buffer); // 정상적인 경우 일정 추가
         }
     } else printf("Data file does not exist\n"); // 파일 예외처리
 }
