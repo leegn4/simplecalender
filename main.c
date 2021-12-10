@@ -143,6 +143,7 @@ void AddSchedule(int year, int month, int day, int type, char* content) { // add
 }
 
 void RemoveSchedule(int year, int month, int day) { // remove 기능
+    schedule_count--;
     SCHEDULE *curr=schedules[year-1970][month-1][day-1],*prev=NULL; // 리스트 원소 탐색 포인터, 이전 원소 포인터
     if (curr->next==NULL) { // 리스트가 비어 있다면
         printf("No schedule to remove\n");
